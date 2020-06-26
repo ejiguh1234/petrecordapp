@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="put:\pet\(ID):petraml-config" doc:id="52dd6942-434d-483c-947d-779a59aa897d" >
+		<ee:transform doc:name="Transform Message" doc:id="0f7fd2c2-7476-4c43-ac5d-fb6105d55288" >
+			<ee:variables >
+				<ee:set-variable variableName="ID" ><![CDATA[attributes.uriParams.'ID']]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="updatePETByID" doc:id="172c36cd-2839-4b4d-9c63-1eba2104bcd7" name="updatePETByID"/>
+		<ee:transform doc:name="Transform Message" doc:id="328a35e2-b895-484c-a6b9-db19de3509d2" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="delete:\pet\(ID):petraml-config" doc:id="c18e1ab4-a717-4138-ae74-a19f3d7906a0" >
+		<ee:transform doc:name="Transform Message" doc:id="e3d48a84-fe69-4177-8656-2a1e2bc57eec" >
+			<ee:variables >
+				<ee:set-variable variableName="ID" ><![CDATA[attributes.uriParams.'ID']]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="DeletPETByID" doc:id="680ffe3b-ac1b-44d4-9d9f-db588c87b75b" name="DeletPETByID"/>
+		<ee:transform doc:name="Transform Message" doc:id="588e04c3-fd41-45f7-9241-0e48e9c7c997" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+"Item has been deleted"]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="get:\pet\(ID):petraml-config" doc:id="16b66156-866f-41b7-a72e-9d802f3be3ca" >
+		<ee:transform doc:name="Transform Message" doc:id="5354ecee-291b-4e3a-8316-a8f7382ce42c" >
+			<ee:variables >
+				<ee:set-variable variableName="ID" ><![CDATA[attributes.uriParams.'ID']]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="getAPETRecordBYID" doc:id="76b08b99-07d7-4aee-8a96-33869b7565f4" name="getAPETRecordBYID"/>
+		<ee:transform doc:name="Transform Message" doc:id="446a900f-265b-4b20-a3b6-1d2e79632eeb" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="get:\pets:petraml-config" doc:id="964ab08e-a6d4-4605-a8d1-b840f7840605" >
+		<flow-ref doc:name="getAllPets" doc:id="994b07c0-a3a9-4011-afc5-d314a9b1853c" name="getAllPets"/>
+		<logger level="INFO" doc:name="Logger" doc:id="a5c415da-7287-46a7-97bd-c03a85df7cdd" message="get:\pets:petraml-config" />
+	</flow>
+	<flow name="post:\pet\(ID):application\json:petraml-config" doc:id="7e8205aa-5451-4e48-bf88-703c633055b8" >
+		<ee:transform doc:name="Transform Message" doc:id="389286bd-86a0-4161-9cb9-f16e8cbbdcda" >
+			<ee:variables >
+				<ee:set-variable variableName="ID" ><![CDATA[attributes.uriParams.'ID']]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<ee:transform doc:name="Transform Message" doc:id="39b8a13c-e71a-4065-9c77-25fbe9a9d860" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<flow-ref doc:name="postNewPETBYID" doc:id="2da98b7f-690a-4295-afd1-8f485aa89e74" name="postNewPETBYID"/>
+		<ee:transform doc:name="Transform Message" doc:id="cdd8c2bb-ffc3-43d8-b533-edc79c077061" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+"Pet Info Updated"]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>

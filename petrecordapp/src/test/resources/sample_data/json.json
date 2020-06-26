@@ -1,0 +1,8 @@
+{
+  "Breed": "String",
+  "Color": "String",
+  "Name": "String",
+  "DOB": "2000-12-05",
+  "Gender": "String",
+  "ID": "String"
+}

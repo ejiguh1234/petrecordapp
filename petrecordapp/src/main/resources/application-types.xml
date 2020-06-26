@@ -1,0 +1,47 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<types:mule xmlns:types="http://www.mulesoft.org/schema/mule/types">
+  <types:catalog>
+    <types:type name="Sample" format="json">
+      <types:shape format="weave" example="Sample/Sample.Json"><![CDATA[%dw 2.0
+
+type Sample = {|
+  Breed: String, 
+  Color: String, 
+  Name: String, 
+  DOB: String, 
+  Gender: String, 
+  ID: String
+|} {"example": "{\\\"Breed\\\":\\\"String\\\",\\\"Color\\\":\\\"String\\\",\\\"Name\\\":\\\"String\\\",\\\"DOB\\\":\\\"String\\\",\\\"Gender\\\":\\\"String\\\",\\\"ID\\\":\\\"String\\\"}"}
+
+]]></types:shape>
+    </types:type>
+  </types:catalog>
+  <types:enrichment select="#d6f3fe15-0b23-4643-a6c3-a5da80e43dc0">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="Sample"/>
+        </types:message>
+      </types:input-event>
+      <types:output-event>
+        <types:message>
+          <types:payload type="Sample"/>
+        </types:message>
+      </types:output-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#c1925715-1508-45fc-9921-f3bdb3f2201c">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="Sample"/>
+        </types:message>
+      </types:input-event>
+      <types:output-event>
+        <types:message>
+          <types:payload type="Sample"/>
+        </types:message>
+      </types:output-event>
+    </types:processor-declaration>
+  </types:enrichment>
+</types:mule>

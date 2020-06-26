@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:validation="http://www.mulesoft.org/schema/mule/validation" xmlns:twilio-connector="http://www.mulesoft.org/schema/mule/twilio-connector"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/twilio-connector http://www.mulesoft.org/schema/mule/twilio-connector/current/mule-twilio-connector.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd">
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="f3b39beb-619d-4feb-9d09-c51e44d9b73a" >
+		<db:my-sql-connection host="localhost" port="32771" user="user1" password="lol123" database="msdb" />
+	</db:config>
+	<validation:config name="Validation_Config" doc:name="Validation Config" doc:id="676a705b-a0de-41ed-8b17-a9e627d11ab3" />
+	<twilio-connector:config name="Twilio_Connector_Config" doc:name="Twilio Connector Config" doc:id="606d9373-8959-4172-8a99-1c23274b0085" property_username="AC7427a8f268c8a87458780be7c12d0ab4" property_password="63bbc083fb092b2705eb158dacdab7b9" >
+		<twilio-connector:connection />
+	</twilio-connector:config>
+	<flow name="getAPETRecordBYID" doc:id="7d4aafc9-836e-433d-a43d-c4603ca3845c" >
+		<logger level="INFO" doc:name="GETAPETRECByDOB" doc:id="888dfbdc-9e60-404b-b453-f341844844b7" message="Get Recorde ID=#[payload]" />
+		<db:select doc:name="GETBYID" doc:id="dcf2c37b-28b8-45c0-a5a5-eb0f4b08ecb4" config-ref="Database_Config">
+			<db:sql >SELECT  ID,DOB,Breed,Color,Name,Gender 
+FROM Pet 
+WHERE  ID=:ID</db:sql>
+			<db:input-parameters ><![CDATA[#[{'ID':attributes.uriParams.ID}]]]></db:input-parameters>
+		</db:select>
+		<logger level="INFO" doc:name="ReterivedRecored" doc:id="dcdc05fc-f864-44ac-85ae-869f943eccc3" message="Record byID #[payload]"/>
+		<ee:transform doc:name="Transform Message" doc:id="3f4e6e17-960a-4124-86f4-0bf8225b4775" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="updatePETByID" doc:id="886953d6-02c3-4144-8953-67a611ade587" >
+		<logger level="INFO" doc:name="UpdatePETbyDOB" doc:id="3d137d2b-83a4-46f7-89bb-e6b8d3fcd21e" message="ID #[payload]"/>
+		<ee:transform doc:name="Transform Message" doc:id="c1925715-1508-45fc-9921-f3bdb3f2201c" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<db:update doc:name="Update" doc:id="53497b40-071d-4c58-ac72-44013eeed2f8" config-ref="Database_Config" target="DOB">
+			<db:sql >UPDATE Pet
+SET Name =:Name,Gender =:Gender,Breed =:Breed , DOB =:DOB , Color=:Color
+WHERE ID =:ID
+</db:sql>
+			<db:input-parameters ><![CDATA[#[{ 
+	'Name': payload.Name,
+	'Gender': payload.Gender,
+	'Breed': payload.Breed,
+	'DOB': payload.DOB,
+	'Color': payload.Color,
+	'ID': payload.ID
+}]]]></db:input-parameters>
+		</db:update>
+		<validation:is-true doc:name="Is true" doc:id="cc9cfb93-9e9d-43a6-b7e2-2222d670ab95" config-ref="Validation_Config" expression="#[vars.DOB.affectedRows == 1]" message='#["Invalid pet DOB " ++ attributes.uriParams.ID]'/>
+		<ee:transform doc:name="Transform Message" doc:id="c0c8c366-ef41-437c-a510-f1c1e286e88f" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+var DOB = payload.DOB as Date
+---
+{
+	age: now().year - DOB.year,
+	Name: payload.Name,
+	'Gender': payload.Gender,
+	'Breed': payload.Breed,
+	'DOB': payload.DOB,
+	'Color': payload.Color,
+	'ID': payload.ID
+}
+
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="PetUpdatedbyDOB" doc:id="c57967fb-e293-42ce-b49e-04f6a4513af1" message="Pet age = #[payload.age],Name = #[payload.Name]"/>
+		<choice doc:name="If age is Greater Than 10 Send  a Text" doc:id="72076cec-45d1-43e3-86f4-960c83912e00" >
+			<when expression="#[payload.age &gt;10]">
+				<logger level="INFO" doc:name="Logger" doc:id="67536a4b-28d6-4389-b541-2401cb99c509" message="Payload beforeText #[payload]"/>
+				<ee:transform doc:name="Transform Message" doc:id="47d651f5-bbc6-4f51-9ace-7b77d0532add" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	Body: "Hello, your pet " ++ payload.Name as String ++  " is " ++ payload.age  ++ " years old. Time for a check up!",
+	From: "+12565791050",
+	To: "+19168336757"
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<twilio-connector:send-message doc:name="Send message" doc:id="2a20be98-cfea-47b1-b38e-533f26dc3f7b" config-ref="Twilio_Connector_Config" account-sid="AC7427a8f268c8a87458780be7c12d0ab4">
+				</twilio-connector:send-message>
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Logger" doc:id="3861d1c3-0140-4fe5-a6b9-c5f17e195db6" message="NO NEED to SEnd  Text #[payload]"/>
+			</otherwise>
+		</choice>
+		<ee:transform doc:name="Transform Message" doc:id="1dd352f3-f1b4-4b83-9938-b777320e0b53" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="DeletPETByID" doc:id="a91d9565-1fe6-459f-96d7-e7d4c588ff58" >
+		<logger level="INFO" doc:name="DeletebyDOBstarted" doc:id="9f248ed6-4154-421b-bbab-5c33c1ddae16" />
+		<ee:transform doc:name="Transform Message" doc:id="d6f3fe15-0b23-4643-a6c3-a5da80e43dc0" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<db:delete doc:name="Delete" doc:id="718d2e82-6ad5-4123-9077-edfc05b2dd45" config-ref="Database_Config">
+			<db:sql >DELETE  FROM Pet
+WHERE ID =:ID</db:sql>
+			<db:input-parameters ><![CDATA[#[{'ID': attributes.uriParams.ID}]]]></db:input-parameters>
+		</db:delete>
+		<ee:transform doc:name="Transform Message" doc:id="50cbbf11-232d-43ef-ab87-5580c13ee0c2" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+ payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="PetHASBeenDeleted" doc:id="500408a0-7a7e-45e6-bdbb-4ac237de39c2" />
+	</flow>
+	<flow name="getAllPets" doc:id="485934e4-a7b5-4ab4-90b2-046c427c25ea" >
+		<logger level="INFO" doc:name="AllPestReq" doc:id="5be841f3-6bb9-4268-a74d-db79e7ff8457" message="SAPIqueryParams = #[message.attributes.queryParams.Newdate]" />
+		<db:select doc:name="Select" doc:id="dab37c51-fed6-4e2a-be52-c3219f7c22b1" config-ref="Database_Config">
+			<db:sql >SELECT *FROM Pet</db:sql>
+		</db:select>
+		<logger level="INFO" doc:name="AllPETSINFORecived" doc:id="d8665ad9-a9af-42f4-8a0a-cdb8a6252edb" />
+		<ee:transform doc:name="Transform Message" doc:id="8c563406-79f4-4915-8000-8565491756a3" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="postNewPETBYID" doc:id="f7151fa7-a4b6-4921-ac46-be34f2577b69" >
+		<logger level="INFO" doc:name="NewPETCREATED" doc:id="73374103-90c9-49b2-8322-842b95c2fb82" />
+		<db:insert doc:name="Insert" doc:id="3a09631c-6421-4d0a-9079-d5da90d034b3" config-ref="Database_Config">
+			<db:sql>INSERT INTO Pet ( ID,Name,Gender,DOB,Breed,Color)VALUES(:ID,:Name,:Gender,:DOB,:Breed,:Color)
+</db:sql>
+			<db:input-parameters><![CDATA[#[{   
+	 'ID':  payload.ID ,
+	 'Name':payload.Name,
+	 'Gender':payload.Gender,
+	 'Color' :payload.Color ,
+	 'Breed': payload.Breed,
+	 'DOB': payload.DOB,
+}]]]></db:input-parameters>
+		</db:insert>
+		<logger level="INFO" doc:name="NewPETdded" doc:id="72a1a6ad-0028-42ad-9d1d-4204d95e4274" />
+	</flow>
+</mule>
